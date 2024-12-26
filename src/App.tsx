@@ -1,8 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Board from "./components/Board";
 import styled from "styled-components";
 import History from "./components/History";
 import { IMoveData } from "./types/interfaces";
+
+const PLAYER_O = "O";
+const PLAYER_X = "X";
 
 const Wrapper = styled.div`
   display: flex;
@@ -14,13 +17,15 @@ function App() {
   const [undoStack, setUndoStack] = useState<IMoveData[]>([]);
   const [redoStack, setRedoStack] = useState<IMoveData[]>([]);
   const [cellStates, setCellStates] = useState<string[]>(Array(9).fill(""));
+  const [winner, setWinner] = useState<string | null>(null);
 
   const handlePlayerMove = (data: IMoveData) => {
     setUndoStack((prevUndoStack) => [...prevUndoStack, data]);
     setRedoStack([]);
     setCellStates((prevStates) => {
       const updatedStates = [...prevStates];
-      updatedStates[data.cellId] = curPlayer ? "O" : "X";
+      updatedStates[data.cellId] = curPlayer ? PLAYER_O : PLAYER_X;
+      console.log(data.cellId);
       return updatedStates;
     });
     setNumMoves(undoStack.length + 1);
@@ -72,6 +77,7 @@ function App() {
     setCellStates(updatedCellStates);
     setNumMoves(updatedNumMoves);
     setCurPlayer(updatedCurPlayer);
+    setWinner(null);
   };
   // const redo = () => {
   //   if (redoStack.length === 0) return;
@@ -82,7 +88,7 @@ function App() {
   //   setUndoStack((prevUndoStack) => [...prevUndoStack, lastElement]);
   //   setCellStates((prevCellStates) => {
   //     const updatedCellStates = [...prevCellStates];
-  //     updatedCellStates[lastElement.cellId] = lastElement.player ? "O" : "X";
+  //     updatedCellStates[lastElement.cellId] = lastElement.player ? PLAYER_O : PLAYER_X;
   //     return updatedCellStates;
   //   });
   //   setCurPlayer((prev) => !prev);
@@ -101,7 +107,9 @@ function App() {
       const lastItem = updatedRedoStack.pop();
       if (!lastItem) break;
       updatedUndoStack.push(lastItem);
-      updatedCellStates[lastItem.cellId] = lastItem.player ? "O" : "X";
+      updatedCellStates[lastItem.cellId] = lastItem.player
+        ? PLAYER_O
+        : PLAYER_X;
       updatedNumMoves++;
       updatedCurPlayer = !updatedCurPlayer;
     }
@@ -122,6 +130,36 @@ function App() {
     }
   };
 
+  const calculateWinner = () => {
+    const conditions = [
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8],
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8],
+      [0, 4, 8],
+      [2, 4, 6],
+    ];
+    for (let i = 0; i < conditions.length; i++) {
+      const [a, b, c] = conditions[i];
+      if (
+        cellStates[a] &&
+        cellStates[b] &&
+        cellStates[c] &&
+        cellStates[a] === cellStates[b] &&
+        cellStates[b] === cellStates[c]
+      ) {
+        setWinner(cellStates[a]);
+        return;
+      }
+    }
+  };
+
+  useEffect(() => {
+    calculateWinner();
+  }, [cellStates]);
+
   return (
     <Wrapper>
       <Board
@@ -130,6 +168,7 @@ function App() {
         moveNumber={numMoves + 1}
         undoStack={undoStack}
         cellStates={cellStates}
+        winner={winner}
       />
       <History
         numMoves={numMoves}

@@ -1,6 +1,9 @@
 import styled from "styled-components";
 import { IMoveData } from "../types/interfaces";
 
+const PLAYER_O = "O";
+const PLAYER_X = "X";
+
 const Container = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -23,34 +26,35 @@ interface IBoard {
   moveNumber: number;
   undoStack: IMoveData[];
   cellStates: string[];
+  winner: string | null;
 }
 
-function Board({ curPlayerBool, onMove, moveNumber, cellStates }: IBoard) {
-  //   const paintMoves = () => {
-  //     setCellText(Array(9).fill(""));
-  //     for (let i = 0; i < undoStack.length; i++) {
-  //       setCellText((prev) => {
-  //         const updatedTexts = [...prev];
-  //         updatedTexts[undoStack[i].cellId] = curPlayerBool ? "O" : "X";
-  //         return updatedTexts;
-  //       });
-  //     }
-  //   };
+function Board({
+  curPlayerBool,
+  onMove,
+  moveNumber,
+  cellStates,
+  winner,
+}: IBoard) {
   const handleCellClick = (index: number) => {
     if (cellStates[index] !== "") return;
     if (moveNumber > 9) return;
+    if (winner) return;
     const moveData: IMoveData = {
       player: curPlayerBool,
       cellId: index,
       moveNumber,
     };
     onMove(moveData);
-    // console.log(moveNumber);
   };
 
   return (
     <div>
-      <TurnIndicator>Current Player: {curPlayerBool ? "O" : "X"}</TurnIndicator>
+      <TurnIndicator>
+        {winner
+          ? `Winner: ${winner}`
+          : `Current Player: ${curPlayerBool ? PLAYER_O : PLAYER_X}`}
+      </TurnIndicator>
       <Container>
         {cellStates.map((text, index) => (
           <Cell key={index} onClick={() => handleCellClick(index)}>
